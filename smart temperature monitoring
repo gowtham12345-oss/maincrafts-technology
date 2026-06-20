@@ -1,0 +1,142 @@
+#include <DHT.h> // Include the DHT sensor library
+#include <LiquidCrystal.h> // Include the LiquidCrystal library for LCD
+
+#define DHTPIN 10 // Define the pin for the DHT sensor
+#define DHTTYPE DHT22 // Define the type of DHT sensor
+
+#define LCD_RS 12 // Define the LCD RS pin
+#define LCD_EN 11 // Define the LCD EN pin
+#define LCD_D4 5 // Define the LCD D4 pin
+#define LCD_D5 4 // Define the LCD D5 pin
+#define LCD_D6 3 // Define the LCD D6 pin
+#define LCD_D7 2 // Define the LCD D7 pin
+
+#define BUZZER_PIN 8 // Define the buzzer pin
+#define SNOOZE_BUTTON_PIN 7 // Define the snooze button pin
+#define BACKLIGHT_BUTTON_PIN 6 // Define the backlight button pin
+#define BACKLIGHT_PIN 9 // Define the backlight pin
+
+DHT dht(DHTPIN, DHTTYPE); // Create a DHT object
+LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7); // Create an LCD object
+
+
+void setup() {
+  dht.begin(); // Initialize DHT sensor
+  lcd.begin(16, 2); // Initialize LCD with 16 columns and 2 rows
+  pinMode(BUZZER_PIN, OUTPUT); // Set buzzer pin as output
+  pinMode(SNOOZE_BUTTON_PIN, INPUT_PULLUP); // Set snooze button pin as input with internal pull-up resistor
+  pinMode(BACKLIGHT_BUTTON_PIN, INPUT_PULLUP); // Set backlight button pin as input with internal pull-up resistor
+  pinMode(BACKLIGHT_PIN, OUTPUT); // Set backlight pin as output
+}
+
+void loop() {
+  float temperature = dht.readTemperature(); // Read temperature from DHT sensor
+  float humidity = dht.readHumidity(); // Read humidity from DHT sensor
+
+  // Check if temperature or humidity reading is invalid
+  if (isnan(temperature) || isnan(humidity)) {
+    lcd.print("Error reading data"); // Print error message on LCD
+    return; // Exit loop
+  }
+
+  digitalWrite(9, HIGH);
+  lcd.clear(); // Clear LCD screen
+  lcd.setCursor(0, 0); // Set cursor to the first column of the first row
+  lcd.print("Temp: "); // Print temperature label
+  lcd.print(temperature); // Print temperature value
+  lcd.print("C"); // Print temperature unit
+  lcd.setCursor(0, 1); // Set cursor to the first column of the second row
+  lcd.print("Humidity: "); // Print humidity label
+  lcd.print(humidity); // Print humidity value
+  lcd.print("%"); // Print humidity unit
+  delay(5000);
+
+  // Check if temperature or humidity is above threshold
+  if (temperature > 30 || humidity > 15) {
+      digitalWrite(BUZZER_PIN, HIGH); // Turn on the buzzer
+      tone(BUZZER_PIN, 300, 1000); // Plays 300Hz tone for 1 seconds
+      delay(1000);
+      digitalWrite(BUZZER_PIN, LOW);  // Turn off the buzzer
+      delay(1000);  
+
+      if (digitalRead(SNOOZE_BUTTON_PIN) == LOW) {
+        delay(10000);// Snooze for 10 seconds
+        tone(BUZZER_PIN, 300, 1000); // Plays 300Hz tone for 1 seconds
+        delay(1000);
+        digitalWrite(BUZZER_PIN, LOW); // Turn off the buzzer
+      }     
+  }
+  
+digitalWrite(9, LOW);
+delay(5000);//Assuming that the user press the Backlight button after 5 seconds
+
+if (digitalRead(BACKLIGHT_BUTTON_PIN) == LOW){
+  digitalWrite(9, HIGH);
+  delay(2000); //To visualize the backlight turning on
+}
+
+delay(1000); // Sampling rate of 1 second
+}
+
+#
+{
+  "version": 1,
+  "author": "Ayushi Jaiswal",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-lcd1602", "id": "lcd1", "top": -121.37, "left": 112, "attrs": {} },
+    { "type": "wokwi-arduino-uno", "id": "uno1", "top": 211.8, "left": 37.8, "attrs": {} },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": 31.2,
+      "left": 376.2,
+      "attrs": { "volume": "0.1" }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": 19.5,
+      "left": 484.2,
+      "attrs": { "humidity": "14", "temperature": "57.8" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 140.6,
+      "left": 67.2,
+      "attrs": { "color": "blue" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 44.6,
+      "left": 67.2,
+      "attrs": { "color": "yellow" }
+    }
+  ],
+  "connections": [
+    [ "lcd1:RS", "uno1:12", "green", [ "v28.8", "h-192.2" ] ],
+    [ "lcd1:E", "uno1:11", "green", [ "v38.4", "h-19.8" ] ],
+    [ "lcd1:D4", "uno1:5", "green", [ "v172.8" ] ],
+    [ "lcd1:D5", "uno1:4", "green", [ "h0.1", "v172.8" ] ],
+    [ "lcd1:D6", "uno1:3", "green", [ "v172.8", "h9.8" ] ],
+    [ "lcd1:D7", "uno1:2", "green", [ "v172.8", "h9.9" ] ],
+    [ "lcd1:A", "uno1:9", "magenta", [ "v86.4", "h-77.7" ] ],
+    [ "lcd1:K", "uno1:GND.1", "cyan", [ "v67.2", "h-134.7" ] ],
+    [ "bz1:1", "uno1:GND.1", "black", [ "v9.6", "h-249.9" ] ],
+    [ "bz1:2", "uno1:8", "red", [ "v28.8", "h-202.4" ] ],
+    [ "btn1:2.l", "btn1:1.l", "blue", [ "h0" ] ],
+    [ "btn1:2.r", "btn1:1.r", "blue", [ "h0" ] ],
+    [ "btn1:2.l", "uno1:GND.1", "blue", [ "v19.4", "h230.1" ] ],
+    [ "btn1:2.r", "uno1:7", "blue", [ "v9.8", "h236.6" ] ],
+    [ "btn2:2.r", "btn2:1.r", "yellow", [ "h0" ] ],
+    [ "btn2:1.l", "btn2:2.l", "yellow", [ "h0" ] ],
+    [ "btn2:2.l", "uno1:GND.1", "yellow", [ "v38.6", "h239.7" ] ],
+    [ "btn2:2.r", "uno1:6", "yellow", [ "h96.2", "v96.2", "h5.9" ] ],
+    [ "dht1:VCC", "uno1:5V", "red", [ "v297.6", "h-301.4" ] ],
+    [ "dht1:GND", "uno1:GND.2", "black", [ "v336", "h-320.7" ] ],
+    [ "dht1:SDA", "uno1:10", "limegreen", [ "v28.8", "h-317.4" ] ]
+  ],
+  "dependencies": {}
+}
